@@ -110,7 +110,7 @@ impl Tray {
                 let _ = tray.set_icon(Some(icon));
             }
         }
-        let _ = self.menu.pause.set_text(if paused {
+        self.menu.pause.set_text(if paused {
             "恢复自动修复"
         } else {
             "暂停自动修复"
