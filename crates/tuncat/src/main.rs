@@ -8,6 +8,41 @@ mod tray;
 
 use eframe::egui;
 
+/// egui's bundled fonts have no CJK glyphs — register a system Chinese font
+/// (Microsoft YaHei first, then SimSun/SimHei) as a fallback so the UI text
+/// renders on any zh-CN Windows install.
+fn install_cjk_fonts(ctx: &egui::Context) {
+    let mut fonts = egui::FontDefinitions::default();
+    for candidate in ["msyh.ttc", "msyh.ttf", "simsun.ttc", "simhei.ttf"] {
+        let path = std::path::Path::new(r"C:\Windows\Fonts").join(candidate);
+        let Ok(data) = std::fs::read(&path) else {
+            continue;
+        };
+        if data.len() < 4 {
+            continue;
+        }
+        fonts
+            .font_data
+            .insert("cjk".to_owned(), std::sync::Arc::new(egui::FontData::from_owned(data)));
+        // Append (not prepend): Latin glyphs keep using the bundled fonts,
+        // missing CJK glyphs fall through to the system font.
+        fonts
+            .families
+            .entry(egui::FontFamily::Proportional)
+            .or_default()
+            .push("cjk".to_owned());
+        fonts
+            .families
+            .entry(egui::FontFamily::Monospace)
+            .or_default()
+            .push("cjk".to_owned());
+        tracing::info!("CJK font loaded: {}", path.display());
+        ctx.set_fonts(fonts);
+        return;
+    }
+    tracing::warn!("no CJK font found in C:\\Windows\\Fonts; Chinese text may show as boxes");
+}
+
 fn main() -> eframe::Result<()> {
     // Require administrator (ICS needs it); UAC prompt on manual launch.
     #[cfg(windows)]
@@ -39,11 +74,7 @@ fn main() -> eframe::Result<()> {
     // Window icon from the same cat artwork.
     let icon = tray::decode_png(tray::TRAY_OK)
         .ok()
-        .map(|(rgba, width, height)| egui::IconData {
-            width,
-            height,
-            rgba,
-        });
+        .map(|(rgba, width, height)| egui::IconData { width, height, rgba });
 
     let mut viewport = egui::ViewportBuilder::default()
         .with_inner_size([560.0, 620.0])
@@ -62,6 +93,7 @@ fn main() -> eframe::Result<()> {
         "TunCat",
         options,
         Box::new(move |cc| {
+            install_cjk_fonts(&cc.egui_ctx);
             cc.egui_ctx
                 .set_visuals(app::TunCatApp::theme_visuals(config.theme));
             Ok(Box::new(app::TunCatApp::new(core, tray, config, elevated)))
