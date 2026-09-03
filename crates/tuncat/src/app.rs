@@ -8,8 +8,8 @@ use tuncat_core::autostart;
 use tuncat_core::config::{Config, PulseDirection, ThemeMode};
 use tuncat_core::state::{CoreCommand, CoreEvent, CoreHandle, CoreState, LogLevel, StatusSnapshot};
 
-use crate::platform;
 use crate::tray::{Tray, TrayAction};
+use crate::platform;
 
 const BRAND: Color32 = Color32::from_rgb(0x2F, 0x7D, 0xD6);
 
@@ -65,8 +65,11 @@ impl TunCatApp {
                     if self.logs.len() >= 500 {
                         self.logs.pop_front();
                     }
-                    self.logs
-                        .push_back((entry.timestamp, entry.level, entry.message));
+                    self.logs.push_back((
+                        entry.timestamp,
+                        entry.level,
+                        entry.message,
+                    ));
                 }
             }
         }
@@ -95,13 +98,11 @@ impl TunCatApp {
 
         // Intercept the close button: minimize to tray or allow quit.
         let close_requested = ctx.input(|i| i.viewport().close_requested());
-        if close_requested && !self.shutdown {
-            if self.config.close_to_tray {
-                ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
-                if self.window_visible {
-                    self.window_visible = false;
-                    ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
-                }
+        if close_requested && !self.shutdown && self.config.close_to_tray {
+            ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
+            if self.window_visible {
+                self.window_visible = false;
+                ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
             }
         }
 
@@ -118,13 +119,13 @@ impl TunCatApp {
         if self.config_dirty {
             self.config = self.pending_config.clone();
             if let Err(e) = self.config.save() {
-                self.logs
-                    .push_back((String::new(), LogLevel::Error, format!("配置保存失败: {e}")));
+                self.logs.push_back((
+                    String::new(),
+                    LogLevel::Error,
+                    format!("配置保存失败: {e}"),
+                ));
             }
-            let _ = self
-                .core
-                .cmd_tx
-                .send(CoreCommand::SetConfig(self.config.clone()));
+            let _ = self.core.cmd_tx.send(CoreCommand::SetConfig(self.config.clone()));
             self.config_dirty = false;
         }
     }
@@ -190,6 +191,7 @@ impl eframe::App for TunCatApp {
             Tab::Settings => self.ui_settings(ui),
         });
     }
+
 }
 
 impl TunCatApp {
@@ -246,11 +248,7 @@ impl TunCatApp {
             }
             let paused = self.status.paused;
             if ui
-                .button(if paused {
-                    "恢复自动修复"
-                } else {
-                    "暂停自动修复"
-                })
+                .button(if paused { "恢复自动修复" } else { "暂停自动修复" })
                 .clicked()
             {
                 let _ = self.core.cmd_tx.send(CoreCommand::SetPaused(!paused));
@@ -281,7 +279,7 @@ impl TunCatApp {
         ui.add_space(6.0);
         let _ = ui.add(
             egui::Label::new("提示：关闭窗口将最小化到托盘，程序在后台继续守护。")
-                .sense(Sense::click()),
+                .sense(Sense::click())
         );
     }
 
@@ -346,8 +344,7 @@ impl TunCatApp {
                         )),
                     }
                 }
-                changed |=
-                    number_field(ui, "启动后延迟（秒）", &mut cfg.autostart_delay_sec, 1, 600);
+                changed |= number_field(ui, "启动后延迟（秒）", &mut cfg.autostart_delay_sec, 1, 600);
             });
 
         ui.add_space(4.0);
@@ -360,7 +357,10 @@ impl TunCatApp {
                 ui.horizontal(|ui| {
                     ui.label("探测地址:");
                     changed |= ui
-                        .add(egui::TextEdit::singleline(&mut cfg.probe_url).desired_width(320.0))
+                        .add(
+                            egui::TextEdit::singleline(&mut cfg.probe_url)
+                                .desired_width(320.0),
+                        )
                         .changed();
                 });
                 changed |= number_field(ui, "探测超时（秒）", &mut cfg.probe_timeout_sec, 1, 30);
@@ -425,7 +425,10 @@ impl TunCatApp {
                     ];
                     ui.horizontal(|ui| {
                         for (mode, label) in modes {
-                            if ui.selectable_label(cfg.theme == mode, label).clicked() {
+                            if ui
+                                .selectable_label(cfg.theme == mode, label)
+                                .clicked()
+                            {
                                 cfg.theme = mode;
                                 changed = true;
                             }
