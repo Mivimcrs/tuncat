@@ -23,6 +23,8 @@ jobs:
         run: |
           git config user.name "tuncat-bot"
           git config user.email "actions@github.com"
+          cargo fmt --all
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git diff --quiet
           if ($LASTEXITCODE -eq 0) { Write-Host "already formatted"; exit 0 }
           git add -A
