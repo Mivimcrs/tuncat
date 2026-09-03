@@ -23,9 +23,8 @@ jobs:
         run: |
           git config user.name "tuncat-bot"
           git config user.email "actions@github.com"
-          cargo fmt --all
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          if (git diff --quiet) { Write-Host "already formatted"; exit 0 }
+          git diff --quiet
+          if ($LASTEXITCODE -eq 0) { Write-Host "already formatted"; exit 0 }
           git add -A
           git commit -m "style: cargo fmt (auto)"
           git push "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:main
