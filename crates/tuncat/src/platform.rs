@@ -82,14 +82,13 @@ pub fn system_prefers_light() -> bool {
     use windows::core::PCWSTR;
     use windows::Win32::Foundation::ERROR_SUCCESS;
     use windows::Win32::System::Registry::{
-        RegCloseKey, RegOpenKeyExW, RegQueryValueExW, HKEY, HKEY_CURRENT_USER, KEY_READ,
-        REG_DWORD, REG_VALUE_TYPE,
+        RegCloseKey, RegOpenKeyExW, RegQueryValueExW, HKEY, HKEY_CURRENT_USER, KEY_READ, REG_DWORD,
+        REG_VALUE_TYPE,
     };
 
-    let subkey: Vec<u16> =
-        "Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize\0"
-            .encode_utf16()
-            .collect();
+    let subkey: Vec<u16> = "Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize\0"
+        .encode_utf16()
+        .collect();
     let value: Vec<u16> = "AppsUseLightTheme\0".encode_utf16().collect();
     unsafe {
         let mut hkey = HKEY::default();

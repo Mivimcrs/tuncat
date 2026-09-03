@@ -37,13 +37,10 @@ pub fn prune_old_logs() {
     let Ok(entries) = std::fs::read_dir(&dir) else {
         return;
     };
-    let cutoff = std::time::SystemTime::now()
-        - std::time::Duration::from_secs(7 * 24 * 3600);
+    let cutoff = std::time::SystemTime::now() - std::time::Duration::from_secs(7 * 24 * 3600);
     for e in entries.flatten() {
         let Ok(meta) = e.metadata() else { continue };
-        if meta.is_file()
-            && meta.modified().map(|m| m < cutoff).unwrap_or(false)
-        {
+        if meta.is_file() && meta.modified().map(|m| m < cutoff).unwrap_or(false) {
             let _ = std::fs::remove_file(e.path());
         }
     }

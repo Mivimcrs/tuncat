@@ -74,17 +74,10 @@ impl Default for Config {
             pulse_hold_sec: 2,
             cooldown_sec: 15,
             max_consecutive_fixes: 3,
-            tun_keywords: [
-                "mihomo",
-                "Meta Tunnel",
-                "wintun",
-                "vgate0",
-                "clash",
-                "utun",
-            ]
-            .iter()
-            .map(|s| s.to_string())
-            .collect(),
+            tun_keywords: ["mihomo", "Meta Tunnel", "wintun", "vgate0", "clash", "utun"]
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
             public_keywords: ["以太网", "Ethernet", "WLAN", "Wi-Fi", "以太网 "]
                 .iter()
                 .map(|s| s.to_string())
@@ -100,8 +93,8 @@ impl Default for Config {
 
 impl Config {
     pub fn config_dir() -> Result<PathBuf> {
-        let base = std::env::var("APPDATA")
-            .context("APPDATA not set, cannot locate config directory")?;
+        let base =
+            std::env::var("APPDATA").context("APPDATA not set, cannot locate config directory")?;
         Ok(PathBuf::from(base).join("TunCat"))
     }
 

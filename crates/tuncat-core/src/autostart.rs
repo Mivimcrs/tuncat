@@ -19,16 +19,7 @@ pub fn install() -> Result<()> {
     let exe = std::env::current_exe().context("cannot resolve current exe path")?;
     let tr = format!("\"{}\" --silent", exe.display());
     let out = schtasks(&[
-        "/Create",
-        "/F",
-        "/TN",
-        TASK_NAME,
-        "/TR",
-        &tr,
-        "/SC",
-        "ONLOGON",
-        "/RL",
-        "HIGHEST",
+        "/Create", "/F", "/TN", TASK_NAME, "/TR", &tr, "/SC", "ONLOGON", "/RL", "HIGHEST",
     ])?;
     if !out.status.success() {
         anyhow::bail!(
@@ -43,7 +34,10 @@ pub fn install() -> Result<()> {
 pub fn uninstall() -> Result<()> {
     let out = schtasks(&["/Delete", "/F", "/TN", TASK_NAME])?;
     let stderr = String::from_utf8_lossy(&out.stderr);
-    if !out.status.success() && !stderr.contains("无法找到") && !stderr.to_lowercase().contains("cannot find") {
+    if !out.status.success()
+        && !stderr.contains("无法找到")
+        && !stderr.to_lowercase().contains("cannot find")
+    {
         anyhow::bail!("schtasks /Delete failed: {}", stderr.trim());
     }
     Ok(())

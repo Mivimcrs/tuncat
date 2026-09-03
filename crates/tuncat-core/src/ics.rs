@@ -11,14 +11,16 @@ use std::thread::sleep;
 use std::time::Duration;
 use tracing::{info, warn};
 
-use windows::core::{GUID, Interface, PCWSTR};
+use windows::core::{Interface, GUID, PCWSTR};
 use windows::Win32::System::Com::{
-    CoCreateInstance, CoInitializeEx, CoUninitialize, CLSCTX_ALL, COINIT_APARTMENTTHREADED,
-    DISPATCH_FLAGS, DISPPARAMS, IDispatch,
+    CoCreateInstance, CoInitializeEx, CoUninitialize, IDispatch, CLSCTX_ALL,
+    COINIT_APARTMENTTHREADED, DISPATCH_FLAGS, DISPPARAMS,
 };
 use windows::Win32::System::Ole::IEnumVARIANT;
-use windows::Win32::System::Variant::{VariantClear, VARIANT, VT_BSTR, VT_BOOL, VT_DISPATCH, VT_I4, VT_UNKNOWN};
 use windows::Win32::System::Variant::VARENUM;
+use windows::Win32::System::Variant::{
+    VariantClear, VARIANT, VT_BOOL, VT_BSTR, VT_DISPATCH, VT_I4, VT_UNKNOWN,
+};
 
 use crate::config::PulseDirection;
 
@@ -36,7 +38,7 @@ pub enum ShareRole {
 impl ShareRole {
     fn as_i4(self) -> i32 {
         match self {
-            ShareRole::Public => 0, // ICSSHARINGTYPE_PUBLIC
+            ShareRole::Public => 0,  // ICSSHARINGTYPE_PUBLIC
             ShareRole::Private => 1, // ICSSHARINGTYPE_PRIVATE
         }
     }
@@ -58,7 +60,13 @@ fn dispid(disp: &IDispatch, name: &str) -> Result<i32> {
     let names = [PCWSTR(wide.as_ptr())];
     let mut id = 0i32;
     unsafe {
-        disp.GetIDsOfNames(&GUID::zeroed(), names.as_ptr(), 1, LOCALE_USER_DEFAULT, &mut id)
+        disp.GetIDsOfNames(
+            &GUID::zeroed(),
+            names.as_ptr(),
+            1,
+            LOCALE_USER_DEFAULT,
+            &mut id,
+        )
     }
     .with_context(|| format!("GetIDsOfNames('{name}') failed (no such member?)"))?;
     Ok(id)
@@ -238,9 +246,8 @@ impl IcsPulser {
 
         let clsid = unsafe { clsid_from_progid() }
             .context("failed to resolve HNetCfg.HNetShare CLSID (ICS not installed?)")?;
-        let manager: IDispatch =
-            unsafe { CoCreateInstance(&clsid, None, CLSCTX_ALL) }
-                .context("failed to create HNetCfg.HNetShare manager")?;
+        let manager: IDispatch = unsafe { CoCreateInstance(&clsid, None, CLSCTX_ALL) }
+            .context("failed to create HNetCfg.HNetShare manager")?;
         Ok(Self { manager })
     }
 
@@ -254,7 +261,8 @@ impl IcsPulser {
 
         let mut out = Vec::new();
         for conn in enum_collection(&coll)? {
-            let Ok(mut props_var) = call(&self.manager, "NetConnectionProps", &[var_dispatch(&conn)])
+            let Ok(mut props_var) =
+                call(&self.manager, "NetConnectionProps", &[var_dispatch(&conn)])
             else {
                 warn!("NetConnectionProps failed for one connection; skipping");
                 continue;
@@ -337,7 +345,10 @@ impl IcsPulser {
             .filter_map(|c| c.sharing_role.map(|r| (c.name.clone(), r)))
             .collect();
         report.preexisting_sharing = snapshot.iter().map(|(n, _)| n.clone()).collect();
-        info!("ICS pulse start: {} preexisting sharing entries", snapshot.len());
+        info!(
+            "ICS pulse start: {} preexisting sharing entries",
+            snapshot.len()
+        );
 
         // 2. Disable all current sharing.
         self.disable_all(&conns, &mut report);
@@ -440,15 +451,9 @@ impl Drop for IcsPulser {
 
 /// Iterate a COM collection via `_NewEnum` (DISPID -4).
 fn enum_collection(coll: &IDispatch) -> Result<Vec<IDispatch>> {
-    let mut enum_var = invoke_dispid(
-        coll,
-        DISPID_NEWENUM,
-        DISPATCH_FLAGS(1 | 2),
-        &[],
-    )
-    .context("_NewEnum failed")?;
-    let unknown = var_take_unknown(&mut enum_var)
-        .context("_NewEnum did not return an IUnknown")?;
+    let mut enum_var = invoke_dispid(coll, DISPID_NEWENUM, DISPATCH_FLAGS(1 | 2), &[])
+        .context("_NewEnum failed")?;
+    let unknown = var_take_unknown(&mut enum_var).context("_NewEnum did not return an IUnknown")?;
     let enumerator: IEnumVARIANT = unknown
         .cast()
         .context("_NewEnum result is not IEnumVARIANT")?;

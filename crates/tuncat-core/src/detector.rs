@@ -32,13 +32,13 @@ impl AdapterInfo {
 /// The friendly names returned here match the `Name` property of ICS
 /// `NetConnectionProps`, which is what the pulse logic relies on.
 pub fn list_adapters() -> Result<Vec<AdapterInfo>> {
+    use windows::core::PWSTR;
     use windows::Win32::Foundation::{ERROR_BUFFER_OVERFLOW, NO_ERROR};
     use windows::Win32::NetworkManagement::IpHelper::{
         GetAdaptersAddresses, GET_ADAPTERS_ADDRESSES_FLAGS,
     };
     use windows::Win32::NetworkManagement::Ndis::IF_OPER_STATUS;
     use windows::Win32::Networking::WinSock::{AF_INET, AF_UNSPEC};
-    use windows::core::PWSTR;
 
     const GAA_FLAG_SKIP_ANYCAST: u32 = 0x0002;
     const GAA_FLAG_SKIP_MULTICAST: u32 = 0x0004;
@@ -55,9 +55,8 @@ pub fn list_adapters() -> Result<Vec<AdapterInfo>> {
         buffer = vec![0u8; size as usize];
         head = buffer.as_mut_ptr()
             as *mut windows::Win32::NetworkManagement::IpHelper::IP_ADAPTER_ADDRESSES_LH;
-        let code = unsafe {
-            GetAdaptersAddresses(AF_UNSPEC.0 as u32, flags, None, Some(head), &mut size)
-        };
+        let code =
+            unsafe { GetAdaptersAddresses(AF_UNSPEC.0 as u32, flags, None, Some(head), &mut size) };
         if code == NO_ERROR.0 {
             break;
         }
@@ -72,10 +71,8 @@ pub fn list_adapters() -> Result<Vec<AdapterInfo>> {
     while !cur.is_null() {
         let a = unsafe { &*cur };
 
-        let friendly_name =
-            unsafe { PWSTR(a.FriendlyName.0).to_string() }.unwrap_or_default();
-        let description =
-            unsafe { PWSTR(a.Description.0).to_string() }.unwrap_or_default();
+        let friendly_name = unsafe { PWSTR(a.FriendlyName.0).to_string() }.unwrap_or_default();
+        let description = unsafe { PWSTR(a.Description.0).to_string() }.unwrap_or_default();
         let oper_up = a.OperStatus == IF_OPER_STATUS(1); // IfOperStatusUp
 
         let has_gateway = unsafe {
@@ -109,10 +106,7 @@ pub fn list_adapters() -> Result<Vec<AdapterInfo>> {
                             as *const windows::Win32::Networking::WinSock::SOCKADDR
                             as *const windows::Win32::Networking::WinSock::SOCKADDR_IN);
                         let b = sin.sin_addr.S_un.S_un_b;
-                        ip = Some(format!(
-                            "{}.{}.{}.{}",
-                            b.s_b1, b.s_b2, b.s_b3, b.s_b4
-                        ));
+                        ip = Some(format!("{}.{}.{}.{}", b.s_b1, b.s_b2, b.s_b3, b.s_b4));
                         break;
                     }
                 }
@@ -135,10 +129,7 @@ pub fn list_adapters() -> Result<Vec<AdapterInfo>> {
 }
 
 /// Pick the TUN adapter: first "up" adapter matching any keyword.
-pub fn find_tun<'a>(
-    adapters: &'a [AdapterInfo],
-    keywords: &[String],
-) -> Option<&'a AdapterInfo> {
+pub fn find_tun<'a>(adapters: &'a [AdapterInfo], keywords: &[String]) -> Option<&'a AdapterInfo> {
     adapters
         .iter()
         .filter(|a| a.oper_up)

@@ -171,7 +171,8 @@ impl Worker {
     }
 
     fn run(&mut self) {
-        let mut next_action = Instant::now() + Duration::from_secs(self.config.autostart_delay_sec.max(1));
+        let mut next_action =
+            Instant::now() + Duration::from_secs(self.config.autostart_delay_sec.max(1));
         self.emit_status(CoreState::BootDelay);
         self.emit_log(
             LogLevel::Info,
@@ -230,7 +231,11 @@ impl Worker {
                 self.status.paused = paused;
                 self.emit_log(
                     LogLevel::Info,
-                    if paused { "自动修复已暂停" } else { "自动修复已恢复" },
+                    if paused {
+                        "自动修复已暂停"
+                    } else {
+                        "自动修复已恢复"
+                    },
                 );
                 let _ = self.event_tx.send(CoreEvent::Status(self.status.clone()));
             }
@@ -277,8 +282,7 @@ impl Worker {
                 self.fail_count = 0;
                 self.consecutive_fixes = 0;
                 self.status.last_probe_ok = Some(true);
-                self.status.last_probe_detail =
-                    Some(format!("{} ms", latency.as_millis()));
+                self.status.last_probe_detail = Some(format!("{} ms", latency.as_millis()));
             }
             ProbeResult::Unhealthy(reason) => {
                 self.status.last_probe_ok = Some(false);
@@ -332,7 +336,10 @@ impl Worker {
                 if !report.restore_failures.is_empty() {
                     self.emit_log(
                         LogLevel::Warn,
-                        format!("以下网卡的共享状态未能恢复: {}", report.restore_failures.join(", ")),
+                        format!(
+                            "以下网卡的共享状态未能恢复: {}",
+                            report.restore_failures.join(", ")
+                        ),
                     );
                 }
             }
