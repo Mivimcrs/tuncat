@@ -16,7 +16,9 @@ fn main() -> Result<()> {
     for a in &ads {
         println!(
             "  {:<28} up={:<5} gw={:<5} ip={:<16} {}",
-            a.friendly_name, a.oper_up, a.has_gateway,
+            a.friendly_name,
+            a.oper_up,
+            a.has_gateway,
             a.ipv4.as_deref().unwrap_or("-"),
             a.description,
         );
@@ -40,7 +42,10 @@ fn main() -> Result<()> {
         None => println!("  Public -> NOT FOUND"),
     }
 
-    println!("\n=== 3. Health probe ({} timeout {}s) ===", cfg.probe_url, cfg.probe_timeout_sec);
+    println!(
+        "\n=== 3. Health probe ({} timeout {}s) ===",
+        cfg.probe_url, cfg.probe_timeout_sec
+    );
     match detector::probe(&cfg.probe_url, cfg.probe_timeout_sec) {
         detector::ProbeResult::Healthy(lat) => {
             println!("  HEALTHY: {} ms", lat.as_millis())
