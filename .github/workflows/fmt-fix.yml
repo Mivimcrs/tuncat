@@ -1,0 +1,31 @@
+name: fmt-fix
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fmt:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: Commit if changed
+        shell: pwsh
+        run: |
+          git config user.name "tuncat-bot"
+          git config user.email "actions@github.com"
+          cargo fmt --all
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if (git diff --quiet) { Write-Host "already formatted"; exit 0 }
+          git add -A
+          git commit -m "style: cargo fmt (auto)"
+          git push "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:main
