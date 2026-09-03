@@ -1,0 +1,21 @@
+[package]
+name = "tuncat-core"
+description = "Core logic for TunCat: TUN adapter detection, health probing and ICS pulse repair"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+tracing-appender.workspace = true
+ureq.workspace = true
+windows.workspace = true
+
+[dev-dependencies]
+tempfile = "3"

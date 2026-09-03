@@ -1,0 +1,35 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build release
+        run: cargo build --release
+      - name: Package
+        shell: pwsh
+        run: |
+          $ver = "${{ github.ref_name }}"
+          New-Item -ItemType Directory -Path dist | Out-Null
+          Copy-Item target/release/tuncat.exe "dist/tuncat.exe"
+          Copy-Item README.md dist/
+          Copy-Item LICENSE dist/
+          Compress-Archive -Path dist/* -DestinationPath "dist/tuncat-$ver-windows-x64.zip"
+          $hash = (Get-FileHash "dist/tuncat-$ver-windows-x64.zip" -Algorithm SHA256).Hash
+          "$hash  tuncat-$ver-windows-x64.zip" | Out-File "dist/tuncat-$ver-windows-x64.zip.sha256"
+      - name: Upload to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.zip
+            dist/*.sha256

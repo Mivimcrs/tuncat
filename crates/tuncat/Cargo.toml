@@ -1,0 +1,26 @@
+[package]
+name = "tuncat"
+description = "TunCat - automatic ICS-pulse repair for TUN adapters conflicting with OPPO Connect"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+default-run = "tuncat"
+
+[dependencies]
+tuncat-core = { path = "../tuncat-core" }
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+eframe.workspace = true
+egui.workspace = true
+tray-icon.workspace = true
+png.workspace = true
+windows.workspace = true
+embed-manifest.workspace = true
+
+[[bin]]
+name = "tuncat"
+path = "src/main.rs"
