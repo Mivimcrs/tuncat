@@ -21,9 +21,10 @@ fn install_cjk_fonts(ctx: &egui::Context) {
         if data.len() < 4 {
             continue;
         }
-        fonts
-            .font_data
-            .insert("cjk".to_owned(), std::sync::Arc::new(egui::FontData::from_owned(data)));
+        fonts.font_data.insert(
+            "cjk".to_owned(),
+            std::sync::Arc::new(egui::FontData::from_owned(data)),
+        );
         // Append (not prepend): Latin glyphs keep using the bundled fonts,
         // missing CJK glyphs fall through to the system font.
         fonts
@@ -74,7 +75,11 @@ fn main() -> eframe::Result<()> {
     // Window icon from the same cat artwork.
     let icon = tray::decode_png(tray::TRAY_OK)
         .ok()
-        .map(|(rgba, width, height)| egui::IconData { width, height, rgba });
+        .map(|(rgba, width, height)| egui::IconData {
+            width,
+            height,
+            rgba,
+        });
 
     let mut viewport = egui::ViewportBuilder::default()
         .with_inner_size([560.0, 620.0])
